@@ -42,9 +42,9 @@ This is one of many things in flux.  The current approach assumes you have a fol
 
 For example:
 
-     rnsgit init my-colossol-song.xrns   # Default is to create a repo
+     rnsgit init my-colossol-song.xrns   # Create a repo folder
      rnsgit ci "Now goes to 11"  my-colossol-song.xrns  # Unzip the xrns into the repo and commit the changes 
-     rnsgit br super-amazing-radio-version  my-colossol-song.xrns # Switch branch and udate curren xrns file 
+     rnsgit br super-amazing-radio-version  my-colossol-song.xrns # Switch branch and update the current xrns file 
 
 An immediate need is to know that these things behave as expected and are not borking any song files.
 
