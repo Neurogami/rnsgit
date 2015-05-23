@@ -1,18 +1,47 @@
+#!/usr/math/bin/ruby
+
+
 require 'yaml'
 
 module RnsGit
   class Core
 
+    BIN = 'rnsgit'
+
+    HELP = <<ENDHELP
+
+  #{BIN} command [command options ] [song-file.xrns]
+  If you omit the name of the xrns file you need to have a .rnsgit file with the song name.
+
+  An example series of commands:
+
+      $ #{BIN} init my-colossal-song.xrns                         # Creates a repo name my-colossal-song
+      $ #{BIN} co "Added superbad vocals"  my-colossal-song.xrns  # Updates repo and commits the changes
+      $ #{BIN} pin                                                # Creates or updates the local .#{BIN} file
+
+  With the .#{BIN} file in place you can omit passing the name of the song file
+
+      $ #{BIN} br "faster-version"   # Creates a new branch, named, "faster-version" , in the my-colossal-song repo
+      $ #{BIN} st   #  Show the status of the my-colossal-song repo
+
+ENDHELP
+
     def usage
-      _ = %~rnsgit command [command options ] [song-file.xrns]\n~
-      _ << %~If you omit the name of the xrns file you need to have a .rnsgit file with the song name.~
-      puts _
+      puts HELP
     end
 
+    def help? argv
+      case argv.first
+      when 'help', '-h', '--help'
+        true
+      else
+        false
+      end
+    end
 
     def initialize argv
 
-      if argv.empty? 
+      if argv.empty? || help?(argv)
         usage
         exit
       end
@@ -20,7 +49,7 @@ module RnsGit
       if argv.last =~ /.xrns/
         @xrns = argv.pop
       else
-        if File.exist? dot_file 
+        if File.exist?  dot_file 
           @dot_config = YAML.load_file dot_file 
           @xrns = @dot_config[:xrns]
         else
@@ -53,33 +82,63 @@ module RnsGit
 
 
       case command
+      when 'help', '-h', '--help'
+        usage
       when 'init'
-        # Where does message come from?
-        msg = "New repo"
+        msg = argv.shift || "New repo"
         unzip_to_git msg
-
       when 'set', 'pin'
         pin_current_song
+      when 'build', 'make', 'zip', 'xrns'
+        zip_to_xrns 
+      when 'unzip', 'extract'
+        msg = argv.shift || "Unzipped current xrns"
+        unzip_to_git 
+      when 'br', 'branch'
+        if branch_name = argv.shift
+          branch_repo branch_name 
+        else
+          puts git_proxy 'br'   
+        end
 
-      when 'br'
-        branch_name = argv.shift
-        branch_repo branch_name
-      when 'co'
+      when 'co', 'checkout'
         branch_name = argv.shift
         name_modifier = argv.shift
         xrns_from_branch branch_name, name_modifier
-      when 'ci'
-        commit_msg = argv.shift
-        unzip_to_git commit_msg 
-      when 'st'
-        puts status_repo 
-      when 'branches'
+      when 'ci', 'commit'  # Note: Look at unzip_to_git  to see what actual git call is used.
+        # It is probably doing `ci -am`
+        unzip_to_git argv.shift
+      when 'branches' # This is just a nicety
         warn "List all branches ..."
         puts list_branches 
       else
-
-        warn "#{self.class} cannot yet handle #{command}"
-
+        #  The goal is to have the script respond to specialized
+        #  commands (such as 'set') while assuming that if
+        #  the user passes something not specified here then it
+        #  is a git command.
+        #  
+        #  The assumption is that the song name (and therefor the repo)
+        #  has been determined and that if the last arg was
+        #  a song file name then that has already been removed from argv
+        #  
+        #  Therefore all that remains in arg should be a git command and
+        #  any args that command might use
+        #  
+        #  But note: Some git commands, such as changing branches or committing changed files
+        #  need to work with the xrns file.  Those commands need to be intercepted
+        #  so that this script can do the extra magic
+        #  This can be tricky; one would have to go through every possible git command
+        #  to see if there is usage such that it would need to either unzip the xnrs in order
+        #  to update the repo files or rezip the xrns with any altered repo files.
+        #
+        #  At the moment this is not being attempted.  The immediate goal is "good enough"
+        #  command coverage such that a user can update the repo from an xrns, 
+        #  and update an xrns from the repo for the more common things like br or co
+        #
+        #  At the very least a user can always use the `zip` and `unzip` commands to
+        #  make or extract the xrns, and can cd into the actual repo and so as they
+        #  like using git directly.
+        puts git_proxy command, *argv 
       end
     end
 
@@ -118,8 +177,9 @@ module RnsGit
 
     def unzip_to_git msg
       unless src_folder_exists? 
-  `mkdir #{repo}`
+        `mkdir #{repo}`
       end
+
       warn `cp #{xrns} #{repo}`
 
       Dir.chdir repo do
@@ -153,7 +213,7 @@ module RnsGit
       return true if re =~ _  
       return true if existing_re =~ _
 
-       # TODO Give more thought to when and where to raise errors
+      # TODO Give more thought to when and where to raise errors
       raise "Failed to checkout branch '#{branch_name}':#{_}"
     end
 
@@ -225,7 +285,7 @@ module RnsGit
           warn "***** Create #{xrns} ******"
           zip_to_xrns 
         else
-           # TODO Give more thought to when and where to raise errors
+          # TODO Give more thought to when and where to raise errors
           raise "xrns_from_branch failed to chechout '#{branch_name}'"
         end
       else
