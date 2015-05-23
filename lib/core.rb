@@ -249,7 +249,7 @@ ENDHELP
       git_proxy "status"
     end
 
-    def git_proxy git_cmd
+    def git_proxy git_cmd, *args
 
       unless is_git_repo? 
         warn "No existing git repo in folder '#{repo}'"
@@ -259,7 +259,7 @@ ENDHELP
       _ = ''
       Dir.chdir repo do
         # Do we need to see if there are uncommited changes?
-        _ = `git #{git_cmd} 2>&1`
+        _ = `git #{git_cmd} #{args.join ' '} 2>&1`
       end
       _
     end
