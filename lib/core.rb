@@ -95,8 +95,14 @@ ENDHELP
         msg = argv.shift || "Unzipped current xrns"
         unzip_to_git 
       when 'br', 'branch'
+
         if branch_name = argv.shift
+          if branch_name  =~ /^-/
+               puts git_proxy 'br', branch_name 
+          else
           branch_repo branch_name 
+          end
+
         else
           puts git_proxy 'br'   
         end
