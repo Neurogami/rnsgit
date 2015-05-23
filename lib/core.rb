@@ -268,7 +268,6 @@ ENDHELP
       git_proxy 'branch -all'
     end
 
-
     def src_folder_exists? 
       File.exist? repo
     end
