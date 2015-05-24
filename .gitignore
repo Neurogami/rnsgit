@@ -1,2 +1,4 @@
 pkg
 rnsgit.gemspec
+songs/
+tasks/ng.rake
