@@ -196,9 +196,12 @@ ENDHELP
           warn "We have not git stuff here"
           warn `git init ; git add *; git ci -am "New"`
         else
+
+         # FIXME  Need to detect new stuff, like additonal samples, and add them!
           warn "This folder is already under git!"
           warn `git st`
-          warn ` git ci -am #{msg}`
+         warn ` git add SampleData/* `
+          warn ` git ci -am '#{msg}'`
         end
 
       end
