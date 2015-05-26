@@ -9,8 +9,9 @@ module RnsGit
     BIN = 'rnsgit'
 
     HELP = <<ENDHELP
-
-  #{BIN} command [command options ] [song-file.xrns]
+  #{BIN} version #{RnsGit::VERSION }
+  ----------------------------------
+  Usage: #{BIN} command [command options ] [song-file.xrns]
   If you omit the name of the xrns file you need to have a .rnsgit file with the song name.
 
   An example series of commands:
@@ -30,6 +31,12 @@ ENDHELP
       puts HELP
     end
 
+
+    def win32?
+      RUBY_PLATFORM =~ /ming32/ ? true : false
+    end
+
+    
     def help? argv
       case argv.first
       when 'help', '-h', '--help'
@@ -117,6 +124,15 @@ ENDHELP
       when 'branches' # This is just a nicety
         warn "List all branches ..."
         puts list_branches 
+
+      when 'nice-merge'
+# The idea is to not interfere too much with default git behavior; let people merge as they care to.
+        # nice-merge is an attempt to make to process a little easier since the wrapper code
+        # interferes with autocomplete; you would need to know and  type the full branch name
+        # you are merging.
+        # So, hopefully, nice-merge can prompt the user and read the input 
+        # and make it easier to select what branch to merge with the current branch.
+        nice_merge 
       else
         #  The goal is to have the script respond to specialized
         #  commands (such as 'set') while assuming that if
@@ -193,15 +209,19 @@ ENDHELP
         warn `rm #{xrns}`
 
         unless File.exist? '.git'
-          warn "We have not git stuff here"
-          warn `git init ; git add *; git ci -am "New"`
+          warn "We have no git stuff here."
+          warn "git init"
+          warn `git init`
+          warn 'git add *'
+          warn `git add *`
+          warn 'git commit -am "New"'
+          warn `git commit -am "New"`
         else
 
-         # FIXME  Need to detect new stuff, like additonal samples, and add them!
           warn "This folder is already under git!"
-          warn `git st`
-         warn ` git add SampleData/* `
-          warn ` git ci -am '#{msg}'`
+          warn `git status`
+          warn `git add */** `  # Is this right? 
+          warn `git commit -am '#{msg}'`
         end
 
       end
@@ -214,16 +234,17 @@ ENDHELP
         return nil
       end
 
-      _ = git_proxy "checkout '#{branch_name}'" 
-      re = Regexp.new "Switched to branch '#{branch_name}'"
+# TODO : See if git on different platforms or different versions adds quotes to branch names in messages
+      _ = git_proxy "checkout #{branch_name}" 
+      switched_re = Regexp.new "Switched to branch '#{branch_name}'"
       existing_re = /already exists|already on/i
       _.strip!
 
-      return true if re =~ _  
+      return true if switched_re =~ _  
       return true if existing_re =~ _
 
       # TODO Give more thought to when and where to raise errors
-      raise "Failed to checkout branch '#{branch_name}':#{_}"
+      raise "Failed to checkout branch #{branch_name}:#{_}"
     end
 
     def branch_repo branch_name
@@ -241,7 +262,7 @@ ENDHELP
         end
 
         # Do we need to see if there are uncommited changes?
-        warn `git br '#{branch_name}'`
+        warn `git branch #{branch_name}`
       end
 
       check_out_branch branch_name
@@ -268,7 +289,7 @@ ENDHELP
     end
 
     def list_branches 
-      git_proxy 'branch -all'
+      git_proxy 'branch --all'
     end
 
     def src_folder_exists? 
@@ -313,15 +334,80 @@ ENDHELP
       end
     end
 
+    def current_branch
+      _ = git_proxy 'branch' 
+      __ = _.split "\n"
+    
+      # God this looks hacky!  FIXME or something.
+      _  = __.select{|b| b.strip =~ /^\*/ }.first.sub /^\*/ ,''
+     # Need to clean this up?
+      _
+    end
+
+    def available_merge_branches
+      git_proxy('branch').split("\n").select{ |b| b.strip !~ /^\*/ } 
+    end
+
+    def nice_merge 
+      warn "Nice merge!"
+# The steps:
+      # Tell the user the current branch, and list the available branches, number
+      puts "Current branch: #{current_branch}"
+      # Prompt the user to enter the numnber of the branch to merge, or q/Q to quit
+      
+      puts "Availbe merge branches:"
+      available_merge_branches.each_with_index do |b,i|
+         puts "\t#{i+1}:\t#{b}"  
+      end
+      puts "Enter the number of the branch to merge, or c to cancel."
+      bi = gets
+      if bi.to_i > 0
+         # Assume this is a branch selection number
+         if branch = available_merge_branches[bi.to_i-1]
+           puts "Merging '#{current_branch}' with '#{branch.strip}' ..."
+           puts git_proxy "merge #{branch.strip}"
+           zip_to_xrns  
+         else
+           puts "That is not  a valid selection."
+         end
+      else
+# We don't really care what the user entered; if not a number then we just quit
+        puts "Canceled"
+      end
+    end
+
     def stash_xrns xrns
       if File.exist? xrns
         puts `mv #{xrns} #{stash_name xrns}`
       end
     end
 
+
+# See if the xrns file is newer than the newest file in the repo
+    def song_is_newer_than_the_repo?
+       song_ts = File.mtime xrns
+       newest_repo_ts = 0 
+       File.chdir repo do |rf|
+
+
+       end
+
+    end
+
+
+    # FIXME
+    # On Windows there is a chance the repo will have folder and file names that exceed some goofy win32 limitation
+    # it may be possible to avoid this: http://sourceforge.net/p/sevenzip/discussion/45797/thread/67334954/
+    #
+    # It seems to require prefixing every file path with something or other.
+    #
+    # Need to determine if the issue is wth extracting to long names and/or zipping up long names
+    #
+    #
     def zip_to_xrns 
       if src_folder_exists? 
         stash_xrns xrns
+        puts "Zipping up repo files into #{xrns} ..."
         Dir.chdir repo do 
           puts `7z -tzip a #{xrns} -xr!.git -r . `
         end
