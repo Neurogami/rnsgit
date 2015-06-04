@@ -222,6 +222,9 @@ ENDHELP
           warn "This folder is already under git!"
           warn `git status`
           warn `git add */** `  # Is this right? 
+# FIXME: Need to escape double-quotes in any strings to be added to te git command, such as in a commit message.
+          # FIXME Need to escape single-quotes in any strings to be added to te git command, such as in a commit message.
+          # Windows seems to dick you over of you use single-quotes in CMD.exe. 
           warn `git commit -am "#{msg}"`
         end
 
