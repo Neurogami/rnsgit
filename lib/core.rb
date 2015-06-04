@@ -2,6 +2,7 @@
 
 
 require 'yaml'
+require 'find'
 
 module RnsGit
   class Core
@@ -9,7 +10,7 @@ module RnsGit
     BIN = 'rnsgit'
 
     HELP = <<ENDHELP
-  #{BIN} version #{RnsGit::VERSION }
+    #{BIN} version #{RnsGit::VERSION }
   ----------------------------------
   Usage: #{BIN} command [command options ] [song-file.xrns]
   If you omit the name of the xrns file you need to have a .rnsgit file with the song name.
@@ -36,7 +37,7 @@ ENDHELP
       RUBY_PLATFORM =~ /ming32/ ? true : false
     end
 
-    
+
     def help? argv
       case argv.first
       when 'help', '-h', '--help'
@@ -105,9 +106,9 @@ ENDHELP
 
         if branch_name = argv.shift
           if branch_name  =~ /^-/
-               puts git_proxy 'br', branch_name 
+            puts git_proxy 'br', branch_name 
           else
-          branch_repo branch_name 
+            branch_repo branch_name 
           end
 
         else
@@ -126,7 +127,7 @@ ENDHELP
         puts list_branches 
 
       when 'nice-merge'
-# The idea is to not interfere too much with default git behavior; let people merge as they care to.
+        # The idea is to not interfere too much with default git behavior; let people merge as they care to.
         # nice-merge is an attempt to make to process a little easier since the wrapper code
         # interferes with autocomplete; you would need to know and  type the full branch name
         # you are merging.
@@ -221,7 +222,7 @@ ENDHELP
           warn "This folder is already under git!"
           warn `git status`
           warn `git add */** `  # Is this right? 
-          warn `git commit -am '#{msg}'`
+          warn `git commit -am "#{msg}"`
         end
 
       end
@@ -234,7 +235,7 @@ ENDHELP
         return nil
       end
 
-# TODO : See if git on different platforms or different versions adds quotes to branch names in messages
+      # TODO : See if git on different platforms or different versions adds quotes to branch names in messages
       _ = git_proxy "checkout #{branch_name}" 
       switched_re = Regexp.new "Switched to branch '#{branch_name}'"
       existing_re = /already exists|already on/i
@@ -337,10 +338,10 @@ ENDHELP
     def current_branch
       _ = git_proxy 'branch' 
       __ = _.split "\n"
-    
+
       # God this looks hacky!  FIXME or something.
       _  = __.select{|b| b.strip =~ /^\*/ }.first.sub /^\*/ ,''
-     # Need to clean this up?
+      # Need to clean this up?
       _
     end
 
@@ -350,28 +351,28 @@ ENDHELP
 
     def nice_merge 
       warn "Nice merge!"
-# The steps:
+      # The steps:
       # Tell the user the current branch, and list the available branches, number
       puts "Current branch: #{current_branch}"
       # Prompt the user to enter the numnber of the branch to merge, or q/Q to quit
-      
+
       puts "Availbe merge branches:"
       available_merge_branches.each_with_index do |b,i|
-         puts "\t#{i+1}:\t#{b}"  
+        puts "\t#{i+1}:\t#{b}"  
       end
       puts "Enter the number of the branch to merge, or c to cancel."
       bi = gets
       if bi.to_i > 0
-         # Assume this is a branch selection number
-         if branch = available_merge_branches[bi.to_i-1]
-           puts "Merging '#{current_branch}' with '#{branch.strip}' ..."
-           puts git_proxy "merge #{branch.strip}"
-           zip_to_xrns  
-         else
-           puts "That is not  a valid selection."
-         end
+        # Assume this is a branch selection number
+        if branch = available_merge_branches[bi.to_i-1]
+          puts "Merging '#{current_branch}' with '#{branch.strip}' ..."
+          puts git_proxy "merge #{branch.strip}"
+          zip_to_xrns  
+        else
+          puts "That is not  a valid selection."
+        end
       else
-# We don't really care what the user entered; if not a number then we just quit
+        # We don't really care what the user entered; if not a number then we just quit
         puts "Canceled"
       end
     end
@@ -383,16 +384,17 @@ ENDHELP
     end
 
 
-# See if the xrns file is newer than the newest file in the repo
+    # See if the xrns file is newer than the newest file in the repo
     def song_is_newer_than_the_repo?
-       song_ts = File.mtime xrns
-       newest_repo_ts = 0 
-       File.chdir repo do |rf|
+      song_ts = File.mtime xrns
+      newest_repo_ts = 0 
+      File.chdir repo do |rf|
+        p rf
 
-
-       end
+      end
 
     end
+
 
 
     # FIXME
@@ -405,22 +407,61 @@ ENDHELP
     #
     #
     def zip_to_xrns 
+
       if src_folder_exists? 
         stash_xrns xrns
         puts "Zipping up repo files into #{xrns} ..."
-        Dir.chdir repo do 
-          puts `7z -tzip a #{xrns} -xr!.git -r . `
-        end
 
-        puts `mv #{repo}/#{xrns} .`
+      
+        files = []
+
+        Dir.chdir repo do 
+          # What if we add each file on its own?    
+          #          puts `7z -tzip a #{xrns} -xr!.git -r . `
+
+          
+          Find.find(Dir.pwd) do |path|
+            puts  "path to zip '#{path}'" # DEBUG
+      
+            if FileTest.directory? path
+              if File.basename(path)[0] == ?.
+                Find.prune      
+              else
+                next
+              end
+            else
+             unless File.basename(path)[0] == ?.
+              files << path
+             end
+            end
+          end # End find
+
+           warn "files to zip: #{files.inspect}"  # DEBUG
+          
+           files.each do |f|
+            puts %~7z -tzip a #{xrns} "#{f}"~
+             puts `7z -tzip a #{xrns} "#{f}"`
+           end
+
+          unless File.exist? xrns
+            raise "Failed to create #{xrns}"
+          else
+            puts "We have the xrns #{xrns}"
+          end
+
+      
+        end
+        warn "Move #{repo}/#{xrns} to here ..."
+        puts `mv #{repo}/#{xrns} .`  # mv is not going to work onm WIndows machines FIXME
         remove_stash_xrns xrns
+        
 
       else
         warn "No folder '#{repo}'"
         raise "No folder '#{repo}'"  # TODO Give more thought to when and where to raise errors
       end
-
     end
+
   end
 end
 
