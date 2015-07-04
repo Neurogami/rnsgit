@@ -422,8 +422,8 @@ ENDHELP
           # What if we add each file on its own?    
           #          puts `7z -tzip a #{xrns} -xr!.git -r . `
 
-          
-          Find.find(Dir.pwd) do |path|
+          _pwd = Dir.pwd + '/'
+          Find.find(Dir.pwd) { |path|
             puts  "path to zip '#{path}'" # DEBUG
       
             if FileTest.directory? path
@@ -437,12 +437,12 @@ ENDHELP
               files << path
              end
             end
-          end # End find
+          } 
 
            warn "files to zip: #{files.inspect}"  # DEBUG
-          
            files.each do |f|
-            puts %~7z -tzip a #{xrns} "#{f}"~
+            f.sub! _pwd, ''
+             puts %~7z -tzip a #{xrns} "#{f}"~
              puts `7z -tzip a #{xrns} "#{f}"`
            end
 
@@ -455,7 +455,7 @@ ENDHELP
       
         end
         warn "Move #{repo}/#{xrns} to here ..."
-        puts `mv #{repo}/#{xrns} .`  # mv is not going to work onm WIndows machines FIXME
+        puts `mv #{repo}/#{xrns} .`  # mv is not going to work onm Windows machines unless users have unix utils    FIXME
         remove_stash_xrns xrns
         
 
