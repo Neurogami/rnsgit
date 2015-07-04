@@ -1,6 +1,19 @@
 rnsgit
 ===========
 
+** WARNING **
+
+The current version has a bug that borks the xrns file when you check out an existing branch.
+
+The tool is supposed to have git restore the branch files, then create the xrns file (i.e. use 7z to create a zip file).
+
+However, recent experience has been that the resulting file crashes Renoise.
+
+_This is bad._
+
+
+
+
 Tool to handle versioning a Renoise song in a local git repo.
 
 Currently at the "works for me, mostly" stage.
