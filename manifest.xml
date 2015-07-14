@@ -2,12 +2,12 @@
 <RenoiseScriptingTool>
   <ApiVersion>4.0</ApiVersion>
   <Version>0.1</Version>
-  <Id>com.github.asbjornu.RnsGit</Id>
+  <Id>nu.asbjor.RnsGit</Id>
   
   <!-- The author field is only used in descriptions of the tools, or in error messages  -->
   <!-- from the script. Providing an email is not necessary, but recommended if you -->
   <!-- want feedback. -->
-  <Author>Bitbear [contact@bitbearmusic.com]</Author>
+  <Author>Asbjørn Ulsberg [contact@asbjor.nu]</Author>
   
   <!-- Main topic, tag(s) of this tool, like "Pattern Editor, Sample Editor" and so on. -->
   <!-- Separate multiple categories with commas. -->  
@@ -27,7 +27,7 @@
   <Icon>icon.png</Icon>
   
   <!-- Optional http:// based URL of the tools homepage, if available... -->
-  <Homepage>http://github.com.com/asbjornu/RnsGit</Homepage>
+  <Homepage>https://github.com/asbjornu/RnsGit.xrnx</Homepage>
 
    <!-- Supported platforms for the tool. When not specified, its assumed that the tool -->
    <!-- is platform independent, else one or more of "Windows, Mac, Linux" are expected -->
