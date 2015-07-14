@@ -27,7 +27,7 @@
   <Icon>icon.png</Icon>
   
   <!-- Optional http:// based URL of the tools homepage, if available... -->
-  <Homepage>https://github.com/asbjornu/RnsGit.xrnx</Homepage>
+  <Homepage>http://github.com/asbjornu/RnsGit.xrnx</Homepage>
 
    <!-- Supported platforms for the tool. When not specified, its assumed that the tool -->
    <!-- is platform independent, else one or more of "Windows, Mac, Linux" are expected -->
