@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RenoiseScriptingTool>
+  <ApiVersion>4.0</ApiVersion>
+  <Version>0.1</Version>
+  <Id>com.github.asbjornu.RnsGit</Id>
+  
+  <!-- The author field is only used in descriptions of the tools, or in error messages  -->
+  <!-- from the script. Providing an email is not necessary, but recommended if you -->
+  <!-- want feedback. -->
+  <Author>Bitbear [contact@bitbearmusic.com]</Author>
+  
+  <!-- Main topic, tag(s) of this tool, like "Pattern Editor, Sample Editor" and so on. -->
+  <!-- Separate multiple categories with commas. -->  
+  <Category>Git VCS DVCS Revision History</Category>
+
+  <!-- Name of the tool, as visible to the user -->
+  <Name>RnsGit</Name>
+
+  <!-- Description of the tool as visible to the users -->
+  <Description>An XRNX tool for providing Git revision control integrated into Renoise.</Description>  
+  
+  <!-- === OPTIONAL ENTRIES === -->
+  
+  <!-- Optional relative path and name of an icon file, which may be shown -->
+  <!-- in tool browsers. The icon must be provided as PNG file and should have -->
+  <!-- a size of 128x128 pixels -->
+  <Icon>icon.png</Icon>
+  
+  <!-- Optional http:// based URL of the tools homepage, if available... -->
+  <Homepage>http://github.com.com/asbjornu/RnsGit</Homepage>
+
+   <!-- Supported platforms for the tool. When not specified, its assumed that the tool -->
+   <!-- is platform independent, else one or more of "Windows, Mac, Linux" are expected -->
+  <Platform>Windows, Mac, Linux</Platform>  
+</RenoiseScriptingTool>
