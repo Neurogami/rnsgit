@@ -86,6 +86,7 @@ ENDHELP
 
     def process argv
 
+      puts "\t\t******** #{xrns} ********"
       command = argv.shift
 
       case command
