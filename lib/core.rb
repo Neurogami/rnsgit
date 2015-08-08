@@ -88,20 +88,28 @@ ENDHELP
 
       command = argv.shift
 
-
       case command
       when 'help', '-h', '--help'
         usage
+
       when 'init'
         msg = argv.shift || "New repo"
         unzip_to_git msg
+
       when 'set', 'pin'
         pin_current_song
+
       when 'build', 'make', 'zip', 'xrns'
         zip_to_xrns 
+
       when 'unzip', 'extract'
         msg = argv.shift || "Unzipped current xrns"
         unzip_to_git 
+
+
+      when 'st', 'status'
+        status_repo 
+
       when 'br', 'branch'
 
         if branch_name = argv.shift
@@ -110,7 +118,6 @@ ENDHELP
           else
             branch_repo branch_name 
           end
-
         else
           puts git_proxy 'br'   
         end
@@ -119,9 +126,11 @@ ENDHELP
         branch_name = argv.shift
         name_modifier = argv.shift
         xrns_from_branch branch_name, name_modifier
+
       when 'ci', 'commit'  # Note: Look at unzip_to_git  to see what actual git call is used.
         # It is probably doing `ci -am`
         unzip_to_git argv.shift
+
       when 'branches' # This is just a nicety
         warn "List all branches ..."
         puts list_branches 
@@ -191,6 +200,18 @@ ENDHELP
 
     end
 
+    def unzip_to_existing_repo
+    unless src_folder_exists? 
+        raise "Cannot unzip to an existing repo because '#{repo}' does not exist."
+      end
+      warn `cp #{xrns} #{repo}`
+
+      Dir.chdir repo do
+        warn `7z -y x #{xrns}`
+        warn `rm #{xrns}`
+      end
+    end
+
     # Assume we have a song in the folder 'songs'
     # We want to copy it out form there and then see if we can extract it into
     # a folder named after the song
@@ -222,9 +243,9 @@ ENDHELP
           warn "This folder is already under git!"
           warn `git status`
           warn `git add */** `  # Is this right? 
-# FIXME: Need to escape double-quotes in any strings to be added to te git command, such as in a commit message.
+          # FIXME Need to escape double-quotes in any strings to be added to te git command, such as in a commit message.
           # FIXME Need to escape single-quotes in any strings to be added to te git command, such as in a commit message.
-          # Windows seems to dick you over of you use single-quotes in CMD.exe. 
+          # Windows seems to dick you over if you use single-quotes in CMD.exe. 
           warn `git commit -am "#{msg}"`
         end
 
@@ -274,7 +295,13 @@ ENDHELP
     end
 
     def status_repo 
-      git_proxy "status"
+      # The repo has the extracted song files.
+      # If you are edting a song, the changes are saved into the xrns file; the repo
+      # knows nothing of these.
+      # In normal git usage when you edit a fle and save it the repo sees this.
+      # So, when a user asks about the repo status the code will unzip the song into the repo first.
+      unzip_to_existing_repo  
+      puts git_proxy "status"
     end
 
     def git_proxy git_cmd, *args
