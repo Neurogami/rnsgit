@@ -208,6 +208,7 @@ ENDHELP
       warn `cp #{xrns} #{repo}`
 
       Dir.chdir repo do
+        warn "In #{repo} calling 7z -y x #{xrns}"
         warn `7z -y x #{xrns}`
         warn `rm #{xrns}`
       end
@@ -228,6 +229,7 @@ ENDHELP
       warn `cp #{xrns} #{repo}`
 
       Dir.chdir repo do
+        warn "In #{repo} calling 7z -y x #{xrns}"
         warn `7z -y x #{xrns}`
         warn `rm #{xrns}`
 
