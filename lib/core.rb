@@ -3,6 +3,7 @@
 
 require 'yaml'
 require 'find'
+require 'fileutils'
 
 module RnsGit
   class Core
@@ -57,7 +58,7 @@ ENDHELP
       if argv.last =~ /.xrns/
         @xrns = argv.pop
       else
-        if File.exist?  dot_file 
+        if File.exist? dot_file 
           @dot_config = YAML.load_file dot_file 
           @xrns = @dot_config[:xrns]
         else
@@ -128,7 +129,7 @@ ENDHELP
         name_modifier = argv.shift
         xrns_from_branch branch_name, name_modifier
 
-      when 'ci', 'commit'  # Note: Look at unzip_to_git  to see what actual git call is used.
+      when 'ci', 'commit'  # Note: Look at unzip_to_git to see what actual git call is used.
         # It is probably doing `ci -am`
         unzip_to_git argv.shift
 
@@ -202,16 +203,25 @@ ENDHELP
     end
 
     def unzip_to_existing_repo
-    unless src_folder_exists? 
+      unless src_folder_exists? 
         raise "Cannot unzip to an existing repo because '#{repo}' does not exist."
       end
-      warn `cp #{xrns} #{repo}`
+      cmd = %~cp #{xrns} #{repo}~
+      puts cmd
+      warn `#{cmd}`
 
       Dir.chdir repo do
+        rm_sample_data
         warn "In #{repo} calling 7z -y x #{xrns}"
         warn `7z -y x #{xrns}`
         warn `rm #{xrns}`
       end
+    end
+
+    def rm_sample_data
+        if File.exist? 'SampleData'
+          FileUtils.rm_f 'SampleData'
+        end
     end
 
     # Assume we have a song in the folder 'songs'
@@ -229,6 +239,7 @@ ENDHELP
       warn `cp #{xrns} #{repo}`
 
       Dir.chdir repo do
+        rm_sample_data
         warn "In #{repo} calling 7z -y x #{xrns}"
         warn `7z -y x #{xrns}`
         warn `rm #{xrns}`
