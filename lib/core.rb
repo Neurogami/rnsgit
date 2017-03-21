@@ -219,9 +219,13 @@ ENDHELP
     end
 
     def rm_sample_data
+      if File.exist? 'SampleData'
+        FileUtils.rm_rf 'SampleData'
+        sleep 3
         if File.exist? 'SampleData'
-          FileUtils.rm_f 'SampleData'
+          raise "Failed to remove SampleData"
         end
+      end
     end
 
     # Assume we have a song in the folder 'songs'
@@ -456,7 +460,7 @@ ENDHELP
         stash_xrns xrns
         puts "Zipping up repo files into #{xrns} ..."
 
-      
+
         files = []
 
         Dir.chdir repo do 
@@ -466,7 +470,7 @@ ENDHELP
           _pwd = Dir.pwd + '/'
           Find.find(Dir.pwd) { |path|
             puts  "path to zip '#{path}'" # DEBUG
-      
+
             if FileTest.directory? path
               if File.basename(path)[0] == ?.
                 Find.prune      
@@ -474,18 +478,18 @@ ENDHELP
                 next
               end
             else
-             unless File.basename(path)[0] == ?.
-              files << path
-             end
+              unless File.basename(path)[0] == ?.
+                files << path
+              end
             end
           } 
 
-           warn "files to zip: #{files.inspect}"  # DEBUG
-           files.each do |f|
+          warn "files to zip: #{files.inspect}"  # DEBUG
+          files.each do |f|
             f.sub! _pwd, ''
-             puts %~7z -tzip a #{xrns} "#{f}"~
-             puts `7z -tzip a #{xrns} "#{f}"`
-           end
+            puts %~7z -tzip a #{xrns} "#{f}"~
+            puts `7z -tzip a #{xrns} "#{f}"`
+          end
 
           unless File.exist? xrns
             raise "Failed to create #{xrns}"
@@ -493,12 +497,12 @@ ENDHELP
             puts "We have the xrns #{xrns}"
           end
 
-      
+
         end
         warn "Move #{repo}/#{xrns} to here ..."
         puts `mv #{repo}/#{xrns} .`  # mv is not going to work onm Windows machines unless users have unix utils    FIXME
         remove_stash_xrns xrns
-        
+
 
       else
         warn "No folder '#{repo}'"
